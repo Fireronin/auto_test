@@ -1,0 +1,14 @@
+openai_config.json
+test_tmp.py
+# Compiled Python files
+__pycache__/
+*.pyc
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
