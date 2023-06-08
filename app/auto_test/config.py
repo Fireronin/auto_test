@@ -1,9 +1,9 @@
 class AutoTestConfig:
-    SUMMARIZE = False
-    TEST = True
-    DEBUG = False
-    VERBOSE = False
-    SAVE_TESTS = True
+    SUMMARIZE = True # if True, will use summarization to create prompt
+    TEST = True # if False, will not run tests, nor query API
+    DEBUG = False # if True, will print out prompts and responses
+    VERBOSE = False # if True, will print out raw API responses
+    SAVE_TESTS = False # if True, will save tests to file for inspection
 
 
     colors = {
