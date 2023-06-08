@@ -52,39 +52,7 @@ openai.api_base = api_base
 openai.api_key = api_key
 openai.api_version = "2023-05-15"
 #%%
-class AutoTestConfig:
-    SUMMARIZE = False
-    TEST = True
-    DEBUG = False
-    VERBOSE = False
-    SAVE_TESTS = True
-    
-
-    colors = {
-        "user": "\033[94m", # blue
-        "system": "\033[92m", # green
-        "assistant": "\033[91m", # red
-        "debug": "\033[93m", # yellow
-    }
-
-    def __init__(self, test_mode: bool = True, debug_mode: bool = False, verbose: bool = False):
-        self.TEST_MODE = test_mode
-        self.DEBUG_MODE = debug_mode
-        self.VERBOSE = verbose
-
-    def set_test_mode(self, test_mode: bool):
-        "If true, tests are run. Every time function is defined, it is run with the test data."
-        self.TEST_MODE = test_mode
-
-    def set_debug_mode(self, debug_mode: bool):
-        "If true, debug messages are printed."
-        self.DEBUG_MODE = debug_mode
-    
-    def set_verbose(self, verbose: bool):
-        "If true, full responses are printed."
-        self.VERBOSE = verbose
-
-auto_test_config = AutoTestConfig()
+from .config import auto_test_config
 #%%
 class Conversation:
     # list of dicts
@@ -119,6 +87,7 @@ PROMPTS = {
     "summarize": "You are an assistant, that takes code and tries to figure out what is the intent of the code. Be consie and try to answer with a single sentence.",
     
     "test": """You are an assistant that responds only with code. You given the code. Write a test for the code. Try to make tests based on properties and not specific values. (But you can use specific values if you want)
+        It is very important that test function is called "test()" !!!
     Example:
 User: 
 Code:
@@ -132,7 +101,8 @@ def test():
     """,
 
     "test with intent": """You are an assistant that responds only with code. You write tests. Code and user intention of user of what needs to be tested. Write a test for the code.
-Example:
+    It is very important that test function is called "test()" !!!
+    Example:
 User: 
 Code:
 def create_conv_model():
@@ -158,6 +128,7 @@ def test():
     """,
     
     "test with summary": """You are an assistant that responds only with code. You given summary of the code and implementation. Write a test for the code. Try to make tests based on properties and not specific values. (But you can use specific values if you want)
+    It is very important that test function is called "test()" !!!
     Example:
 User: 
 Summary:
@@ -173,7 +144,8 @@ def test():
     """,
 
     "test with summary and intent": """You are an assistant that responds only with code. You write tests. Given summary of the code, implementation and user intention of user of what needs to be tested. Write a test for the code.
-Example:
+It is very important that test function is called "test()" !!!
+    Example:
 User: 
 
 Summary:
@@ -264,12 +236,12 @@ def clean_test(test: str):
         test = "\n".join(lines[start+1:end])
     return test
 
-def auto_test(intent: Optional[str] = None ):
+def test(intent: Optional[str] = None ):
     def decorator(func):
         if not auto_test_config.TEST:
             return func
         code = inspect.getsource(func)
-        code = code.replace("@auto_test()\n", "")
+        code = code.replace("@test()\n", "")
 
         if auto_test_config.SUMMARIZE:
             summary = summarize_code(code)
@@ -300,14 +272,3 @@ def auto_test(intent: Optional[str] = None ):
     return decorator
 
 
-# %%
-from functools import lru_cache,cache
-
-@auto_test()
-@cache
-def fib(n):
-    if n < 2:
-        return n
-    return fib(n - 2) + fib(n - 1)
-# %%
-fib(5)
