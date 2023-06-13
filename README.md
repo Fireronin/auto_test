@@ -26,6 +26,12 @@ auto_test_config.VERBOSE = False # if True, will print out raw API responses
 auto_test_config.SAVE_TESTS = False # if True, will save tests to file for inspection
 ```
 
+## How to install
+
+```
+git clone https://github.com/Fireronin/auto_test/tree/master && pip install ./auto_test
+```
+
 ## How it works
 
 This tool is a testing framework for Python code that uses OpenAI API on Azure to generate responses. It consists of a decorator function that can be applied to any python function.
