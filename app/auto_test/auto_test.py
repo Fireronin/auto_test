@@ -9,7 +9,7 @@ from colorama import Fore, Back, Style
 from pygments import highlight
 from pygments.lexers import PythonLexer
 from pygments.formatters import TerminalFormatter
-from config import auto_test_config
+from .config import auto_test_config
 import traceback
 
 CONFIG_FILE = "openai_config.json"
@@ -48,8 +48,8 @@ set_openai_config(api_base, api_key)
 assert api_base !=  ""
 assert api_key !=  ""
 
-print("Using OpenAI API endpoint:", api_base)
-print("Using OpenAI API key:", api_key)
+# print("Using OpenAI API endpoint:", api_base)
+# print("Using OpenAI API key:", api_key)
 openai.api_type = "azure"
 openai.api_base = api_base
 openai.api_key = api_key
@@ -345,11 +345,11 @@ class TimeoutException(Exception):
 def timeout_handler(signum, frame):
     raise TimeoutException("Function timed out")
 
-def run_with_timeout(test, timeout=5):
+def run_with_timeout(test,globalsV, timeout=5):
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(timeout)
     try:
-        result = exec(test,{**globals(), **locals()})
+        result = exec(test,globalsV)
     except TimeoutException as e:
         result = None
     finally:
@@ -357,15 +357,15 @@ def run_with_timeout(test, timeout=5):
     return result
 
 
-def run_test(test: str):
+def run_test(test: str,globalsV):
 
     try:
         # Define the test dynamically
         # run with timeout
         # use exec(test)
-        print("Running test \n")
-        print(test)
-        run_with_timeout(test, timeout=60)
+        # print("Running test \n")
+        # print(test)
+        run_with_timeout(test,globalsV, timeout=60)
 
     except Exception as e:
         # Return the error message
@@ -373,8 +373,10 @@ def run_test(test: str):
         if type(e) == TimeoutException:
             return f"{Fore.RED}Test timed out{Style.RESET_ALL}"
         stack_trace = traceback.format_exc()
-        print(stack_trace)
-
+        #print(stack_trace)
+        if "AssertionError" not in stack_trace:
+            print(f"{Fore.RED}Test failed with error: {e}{Style.RESET_ALL}")
+            return stack_trace
         # find last line that looks like this and extract xyz File "<string>", line xyz , ...
         processed_trace = stack_trace.split("\n")
         # filter lines that start with File "<string>", line xyz , ...
@@ -406,8 +408,9 @@ def run_test(test: str):
     
 
 def clean_test(test: str):
-    if test.startswith("Test:\n"):
-        test = test[6:]
+    if "Test:" in test:
+        test = test.split("Test:")[-1]
+
 
     # remove Fixed code:
     if "Fixed code:" in test:
@@ -421,7 +424,7 @@ def clean_test(test: str):
         test = "\n".join(lines[start+1:end])
     return test
 
-def tester(intent: Optional[str] = None ):
+def tester(intent: Optional[str] = None,globalsV={} ):
     def decorator(func):
         if not auto_test_config.TEST:
             return func
@@ -449,11 +452,11 @@ def tester(intent: Optional[str] = None ):
                 f.write(test)
 
         print(f"{Fore.BLUE}Test:{Style.RESET_ALL}")
-        highlighted_code = highlight(test, PythonLexer(), TerminalFormatter())
+        highlighted_code = highlight(code+ "\n\n"+test+ "\n\ntest()", PythonLexer(), TerminalFormatter())
         print(highlighted_code)
 
-        print(code+ "\n\n"+test+ "\n\ntest()")
-        test_result = run_test(code+ "\n\n"+test+ "\n\ntest()")
+        #print(code+ "\n\n"+test+ "\n\ntest()")
+        test_result = run_test(code+ "\n\n"+test+ "\n\ntest()",globalsV)
         # Blue summary, white text, 
         print(f"{Fore.BLUE}Test result:{Style.RESET_ALL}")
         print(test_result)
@@ -469,7 +472,7 @@ def tester(intent: Optional[str] = None ):
         highlighted_code = highlight(fixed_code, PythonLexer(), TerminalFormatter())
         print(highlighted_code)
 
-        test_result = run_test(fixed_code+ "\n\n"+test+ "\n\ntest()")
+        test_result = run_test(fixed_code+ "\n\n"+test+ "\n\ntest()",globalsV)
         print(f"{Fore.BLUE}Test result:{Style.RESET_ALL}")
         print(test_result)
 
